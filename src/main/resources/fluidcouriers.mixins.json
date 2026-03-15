@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "dev.fluidcouriers.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "fluidcouriers.refmap.json",
+  "minVersion": "0.8",
+  "mixins": [
+    "StockCheckingItemMixin",
+    "PortableStockTickerMixin"
+  ],
+  "client": [
+    "client.PortableStockTickerScreenMixin",
+    "client.PortableStockTickerScreenAmountStepMixin",
+    "client.PortableStockTickerScreenSendMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

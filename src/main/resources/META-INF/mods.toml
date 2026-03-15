@@ -1,0 +1,52 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="fluidcouriers"
+version="1.0.0"
+displayName="Fluid Couriers (FluidLogistics x PackageCouriers Compat)"
+authors="fluidcouriers"
+description='''
+Compatibility mod between Create More: Package Couriers (cmpackagecouriers)
+and FluidLogistics.
+
+Fixes the Portable Stock Ticker so it correctly displays fluids from a
+FluidPackager-linked inventory (instead of Compressed Tank items) and
+allows ordering those fluids just like a stationary Stock Ticker does.
+'''
+
+[[dependencies.fluidcouriers]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="create"
+    mandatory=true
+    versionRange="[6.0.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="cmpackagecouriers"
+    mandatory=true
+    versionRange="[2.1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="fluidlogistics"
+    mandatory=true
+    versionRange="[0.5.0,)"
+    ordering="AFTER"
+    side="BOTH"

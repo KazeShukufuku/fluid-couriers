@@ -1,0 +1,95 @@
+plugins {
+    id 'java'
+    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
+}
+
+version = project.mod_version
+group = project.mod_group_id
+
+base {
+    archivesName = project.mod_id
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+minecraft {
+    mappings channel: 'official', version: project.minecraft_version
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods { "${project.mod_id}" { source sourceSets.main } }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods { "${project.mod_id}" { source sourceSets.main } }
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, "${project.mod_id}.refmap.json"
+    config "${project.mod_id}.mixins.json"
+}
+
+repositories {
+    maven { name = 'tterrag_maven'; url = 'https://maven.tterrag.com/' }
+    maven {
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+    maven { url = 'https://dl.zznty.ru/maven' }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+
+    // Create 6.0.8 for mc1.20.1: project 328085, file 7178761
+    compileOnly fg.deobf("curse.maven:create-328085:7178761")
+
+    // CM Package Couriers: project 1319223, file 7738361
+    compileOnly fg.deobf("curse.maven:cmpackagecouriers-1319223:7738361")
+
+    // Create FluidLogistic: project 1475079, file 7752748
+    compileOnly fg.deobf("curse.maven:fluidlogistics-1475079:7752748")
+
+    // Create Factory Abstractions from author's public maven
+    compileOnly "ru.zznty:create_factory_abstractions-${project.minecraft_version}:${project.cfa_version}"
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    // Reproducible archives: identical inputs produce identical outputs.
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'     : project.mod_id,
+            'Specification-Vendor'    : 'fluidcouriers',
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.jar.archiveVersion,
+            'Implementation-Vendor'   : 'fluidcouriers',
+            'MixinConfigs'            : "${project.mod_id}.mixins.json"
+        ])
+    }
+}
