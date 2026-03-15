@@ -4,7 +4,7 @@
 
 | 问题 | 说明 |
 |------|------|
-| **显示问题** | `cmpackagecouriers` 的**便携式仓库管理器（Portable Stock Ticker）**打开连接到 `fluidlogistics` 流体打包机（FluidPackager）库存时，界面显示的是「压缩储罐（Compressed Tank）」物品图标，而不是流体图标 |
+| **显示问题** | `cmpackagecouriers` 的 **便携式仓库管理器（Portable Stock Ticker）** 打开连接到 `fluidlogistics` 流体打包机（FluidPackager）库存时，界面显示的是「压缩储罐（Compressed Tank）」物品图标，而不是流体图标 |
 | **下单问题** | 界面无法正常下单流体，因为便携式管理器使用的 `GenericLogisticsManager` 代码路径不会触发 fluidlogistics 的流体处理 Mixin |
 
 ## 修复内容
