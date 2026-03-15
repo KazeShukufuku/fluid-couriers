@@ -45,6 +45,13 @@ allows ordering those fluids just like a stationary Stock Ticker does.
     side="BOTH"
 
 [[dependencies.fluidcouriers]]
+    modId="create_factory_abstractions"
+    mandatory=true
+    versionRange="[1.4.7,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
     modId="fluidlogistics"
     mandatory=true
     versionRange="[0.5.0,)"
