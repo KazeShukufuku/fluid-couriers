@@ -44,3 +44,4 @@ Thumbs.db
 !gradle/wrapper/gradle-wrapper.properties
 
 .tmp/
+artwork/
