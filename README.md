@@ -4,25 +4,31 @@
 
 | 问题 | 说明 |
 |------|------|
-| **显示问题** | `cmpackagecouriers` 的 **便携式仓库管理器（Portable Stock Ticker）** 打开连接到 `fluidlogistics` 流体打包机（FluidPackager）库存时，界面显示的是「压缩储罐（Compressed Tank）」物品图标，而不是流体图标 |
-| **下单问题** | 界面无法正常下单流体，因为便携式管理器使用的 `GenericLogisticsManager` 代码路径不会触发 fluidlogistics 的流体处理 Mixin |
+| **显示问题** | 便携式仓库管理器（Portable Stock Ticker）连接到流体打包机时，流体库存显示成「压缩储罐（Compressed Tank）」物品图标 |
+| **下单路由** | 便携式/固定式仓库管理器都走 `GenericLogisticsManager` 路径，绕开了 fluidlogistics 针对流体的 Mixin；且部分环境发出的压缩储罐不是虚拟物品，无法被流体路由器识别 |
+| **订单封包** | `PortableStockTickerScreen.sendIt()` 里将 UI 订单转换成 `GenericOrder` 时，`GenericKey` 编解码在服务端可能被清空，导致请求丢失 |
+| **数量调整** | 流体数量默认按 mB 逐级调整，库存≥1000mB 时滚轮/点击需要过多步数 |
 
 ## 修复内容
 
-### 1. Mixin：`PortableStockTickerScreenMixin`（客户端）
+### 客户端
 
-注入到 `PortableStockTickerScreen.renderItemEntry()` 和 `renderForeground()`：
+1) Mixin：`PortableStockTickerScreenMixin`
+- 在 `renderItemEntry()` / `renderForeground()` 中检测虚拟 `CompressedTankItem`，用 `FluidSlotRenderer` 渲染流体图标，用 `FluidSlotAmountRenderer` 显示 mB 叠加层，并在悬停时显示「流体名称 + mB 数量」。
 
-- 检测到虚拟 `CompressedTankItem`（代表流体）时，用 **`FluidSlotRenderer`** 渲染流体图标  
-- 数量栏用 **`FluidSlotAmountRenderer`** 显示 mB 单位  
-- 悬停提示改为显示**流体名称 + mB 数量**
+2) Mixin：`PortableStockTickerScreenAmountStepMixin`
+- 当库存为虚拟流体且可用量 ≥ 1000mB 时，滚轮 / 点击改为按整桶（1000mB）步进，避免逐 mB 点满。
 
-### 2. Mixin：`StockCheckingItemMixin`（服务端 / 通用）
+3) Mixin：`PortableStockTickerScreenSendMixin`
+- 重写 `sendIt()` 内的订单构建逻辑：优先使用 UI 收集到的条目并将 payload 强制编码为 `ItemKey`，防止 `GenericKey` 在网络包编解码后变成空订单，从而保留流体请求。
 
-注入到 `StockCheckingItem.broadcastPackageRequest()`：
+### 服务端 / 通用
 
-- 当订单包含流体物品时，将请求路由到 `LogisticsManager.broadcastPackageRequest()`  
-- 这样 fluidlogistics 的 `LogisticsManagerMixin` 就能正确处理流体订单，通过 `IFluidPackager.processFluidRequest()` 发给流体打包机
+4) Mixin：`StockCheckingItemMixin`
+- 拦截 `StockCheckingItem.broadcastPackageRequest()`，若订单包含压缩储罐则统一改走 `LogisticsManager.broadcastPackageRequest()`，让 fluidlogistics 的 `LogisticsManagerMixin` 处理流体；若储罐非虚拟则先标准化为虚拟以便识别。
+
+5) Mixin：`PortableStockTickerMixin`
+- 与 (4) 相同逻辑，覆盖 `PortableStockTicker.broadcastPackageRequest()`：记录订单摘要、标准化非虚拟压缩储罐、转交 `LogisticsManager` 并回写地址到物品。
 
 ---
 
@@ -33,8 +39,12 @@ fluid-couriers/
 ├── src/main/java/dev/fluidcouriers/
 │   ├── FluidCouriers.java
 │   └── mixin/
-│       ├── StockCheckingItemMixin.java          (通用)
-│       └── client/PortableStockTickerScreenMixin.java  (客户端)
+│       ├── StockCheckingItemMixin.java                (通用)
+│       ├── PortableStockTickerMixin.java              (通用)
+│       └── client/
+│           ├── PortableStockTickerScreenMixin.java        (渲染与 tooltip)
+│           ├── PortableStockTickerScreenAmountStepMixin.java (流体按桶步进)
+│           └── PortableStockTickerScreenSendMixin.java       (订单封包)
 ├── src/main/resources/
 │   ├── fluidcouriers.mixins.json
 │   ├── pack.mcmeta
@@ -105,15 +115,21 @@ build/libs/fluidcouriers-<version>.jar
 
 ### 为什么显示问题会发生？
 
-fluidlogistics 的 `StockKeeperRequestScreenMixin` 只修补了 Create 的 `StockKeeperRequestScreen`（固定式仓库管理员），没有修补 cmpackagecouriers 的 `PortableStockTickerScreen`，因此便携版看到的是原始 `CompressedTankItem` 物品。
+fluidlogistics 的界面修补只覆盖固定式仓库管理员 (`StockKeeperRequestScreen`)，未覆盖 `PortableStockTickerScreen`，便携版仍按物品逻辑渲染 `CompressedTankItem`。
 
-### 为什么下单问题会发生？
+### 为什么下单会失败？
 
-fluidlogistics 的 `LogisticsManagerMixin` 修补了 `LogisticsManager.broadcastPackageRequest()`，当订单包含虚拟 `CompressedTankItem` 时转发给 `IFluidPackager.processFluidRequest()`。
+fluidlogistics 的 `LogisticsManagerMixin` 只在 `LogisticsManager.broadcastPackageRequest()` 上触发；便携 / 固定仓库管理器默认走 `GenericLogisticsManager.broadcastPackageRequest()`，流体订单绕开了该 Mixin。部分环境还会送出「非虚拟」压缩储罐，进一步导致识别失败。本模组在 `StockCheckingItem`、`PortableStockTicker` 两个路径上拦截并：
+- 发现压缩储罐时强制走 `LogisticsManager.broadcastPackageRequest()`；
+- 如有必要，将压缩储罐标准化为虚拟物品，确保流体被路由到 `IFluidPackager.processFluidRequest()`。
 
-但便携式管理器走的是 CFA 的 `GenericLogisticsManager.broadcastPackageRequest()` 路径，完全绕过了这个修补，所以流体请求永远无法到达流体打包机。
+### 为什么要改订单封包？
 
-本模组的修补：当检测到流体物品时，将请求转回 `LogisticsManager.broadcastPackageRequest()`，让 fluidlogistics 的 Mixin 生效。
+`PortableStockTickerScreen.sendIt()` 将 UI 订单转换为 `GenericOrder` 时使用了 `GenericKey`，在部分环境（含额外 GenericKey 编解码器）下网络包到服务端会变成空订单。现在在客户端直接重建一个只含 `ItemKey` 的订单发送，确保流体请求不会被吃掉。
+
+### 为什么改数量步进？
+
+流体库存常以 B 为单位存放，默认每次 ±1mB 滚动过慢；在可用量 ≥ 1000mB 时改为按桶（1000mB）步进，更贴合实际使用。
 
 ---
 
