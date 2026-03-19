@@ -4,7 +4,7 @@ license="MIT"
 
 [[mods]]
 modId="fluidcouriers"
-version="1.0.0"
+version="1.0.1"
 displayName="Fluid Couriers (FluidLogistics x PackageCouriers Compat)"
 authors="fluidcouriers"
 description='''

@@ -22,6 +22,7 @@ import ru.zznty.create_factory_abstractions.generic.support.GenericOrder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Mixin(value = PortableStockTicker.class, remap = false)
@@ -118,15 +119,17 @@ public class PortableStockTickerMixin {
         }
 
         PackageOrderWithCrafts crafting = orderForBroadcast.asCrafting();
+        ItemStack nonNullTickerStack = Objects.requireNonNull(tickerStack, "tickerStack");
+        String nonNullAddress = Objects.requireNonNull(address, "address");
         boolean result = LogisticsManager.broadcastPackageRequest(
                 uuid,
                 requestType,
                 crafting,
                 identifiedInventory,
-                address
+            nonNullAddress
         );
 
-        ((PortableStockTicker) (Object) this).saveAddressToStack(tickerStack, address);
+        ((PortableStockTicker) (Object) this).saveAddressToStack(nonNullTickerStack, nonNullAddress);
 
         FLUIDCOURIERS_LOGGER.info(
                 "[FluidCouriers] Portable ticker routed fluid order: result={}, normalizedToVirtual={}, requestType={}, address={}",

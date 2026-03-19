@@ -20,8 +20,13 @@ import ru.zznty.create_factory_abstractions.api.generic.key.GenericKeyClientGuiH
 import ru.zznty.create_factory_abstractions.generic.key.item.ItemKey;
 import ru.zznty.create_factory_abstractions.generic.support.BigGenericStack;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import javax.annotation.Nonnull;
 
 /**
  * Patches {@link PortableStockTickerScreen#renderItemEntry} so that
@@ -127,7 +132,7 @@ public class PortableStockTickerScreenMixin {
             remap = false
     )
     private void fluidcouriers$redirectRenderSlot(
-            GenericKeyClientGuiHandler handler,
+            GenericKeyClientGuiHandler<GenericKey> handler,
             GuiGraphics graphics,
             GenericKey key,
             int x,
@@ -169,7 +174,7 @@ public class PortableStockTickerScreenMixin {
             remap = false
     )
     private void fluidcouriers$redirectRenderDecorations(
-            GenericKeyClientGuiHandler handler,
+            GenericKeyClientGuiHandler<GenericKey> handler,
             GuiGraphics graphics,
             GenericKey key,
             int amount,
@@ -213,22 +218,58 @@ public class PortableStockTickerScreenMixin {
    // require = 0: silently skip if the tooltip call cannot be found in this method
    // (the tooltip may be rendered in a helper method in future screen versions)
     private List<Component> fluidcouriers$redirectTooltipBuilder(
-            GenericKeyClientGuiHandler handler,
+            GenericKeyClientGuiHandler<GenericKey> handler,
             GenericKey key,
             int amount
     ) {
                 if (key instanceof ItemKey itemKey) {
-            ItemStack stack = itemKey.stack();
+                        ItemStack stack = itemKey.stack();
                         if (CompressedTankItem.isVirtual(stack)) {
-                FluidStack fluid = CompressedTankItem.getFluid(stack);
-                if (!fluid.isEmpty()) {
+                                FluidStack fluid = CompressedTankItem.getFluid(stack);
+                                if (!fluid.isEmpty()) {
+                                        int milliBuckets = Math.max(amount, fluidcouriers$currentFluidAmount);
                                         List<Component> tooltip = new ArrayList<>();
                                         tooltip.add(fluid.getDisplayName());
-                                        tooltip.add(Component.literal(fluid.getAmount() + "mB").withStyle(ChatFormatting.GRAY));
+                                        tooltip.add(Component.literal(fluidcouriers$formatFluidAmount(milliBuckets)).withStyle(ChatFormatting.GRAY));
                     return tooltip;
                 }
             }
         }
         return handler.tooltipBuilder(key, amount);
     }
+
+        @Unique
+        @Nonnull
+        private static String fluidcouriers$formatFluidAmount(int milliBuckets) {
+                if (milliBuckets < 0) {
+                        return "0 mB";
+                }
+
+                final int bucket = 1000;
+                if (milliBuckets >= 10 * bucket) {
+                        int wholeBuckets = milliBuckets / bucket;
+                        if (milliBuckets % bucket == 0) {
+                                return fluidcouriers$formatGroupedInteger(wholeBuckets) + " B";
+                        }
+
+                        double buckets = milliBuckets / (double) bucket;
+                        return Objects.requireNonNull(fluidcouriers$formatGroupedDecimal(buckets)) + " B";
+                }
+
+                return fluidcouriers$formatGroupedInteger(milliBuckets) + " mB";
+        }
+
+        @Unique
+        private static String fluidcouriers$formatGroupedInteger(long value) {
+                DecimalFormat formatter = new DecimalFormat("#,###", DecimalFormatSymbols.getInstance(Locale.ROOT));
+                return formatter.format(value);
+        }
+
+        @Unique
+        private static String fluidcouriers$formatGroupedDecimal(double value) {
+                DecimalFormat formatter = new DecimalFormat("#,##0.###", DecimalFormatSymbols.getInstance(Locale.ROOT));
+                formatter.setMinimumFractionDigits(0);
+                formatter.setMaximumFractionDigits(3);
+                return formatter.format(value);
+        }
 }

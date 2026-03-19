@@ -46,7 +46,7 @@ public abstract class PortableStockTickerScreenAmountStepMixin {
             remap = false
     )
     private void fluidcouriers$bucketStepOnScroll(BigGenericStack stack, int requestedAmount) {
-        stack.setAmount(fluidcouriers$normalizeAmountStep(stack, requestedAmount));
+        stack.setAmount(fluidcouriers$normalizeScrollAmountStep(stack, requestedAmount));
     }
 
     @Unique
@@ -57,26 +57,47 @@ public abstract class PortableStockTickerScreenAmountStepMixin {
 
         GenericStack genericStack = stack.get();
         int current = genericStack.amount();
-        if (requestedAmount == current) {
-            return requestedAmount;
+        int deltaUnits = requestedAmount - current;
+        if (deltaUnits == 0) {
+            return current;
         }
 
         final int bucket = 1000;
+        int target = current + Integer.signum(deltaUnits) * Math.abs(deltaUnits) * bucket;
         int available = fluidcouriers$getAvailableAmount(genericStack.key());
-
-        if (requestedAmount > current) {
-            int delta = requestedAmount - current;
-            int normalizedDelta = ((delta + bucket - 1) / bucket) * bucket;
-            int target = current + normalizedDelta;
-            if (available > 0) {
-                target = Math.min(target, available);
-            }
-            return Math.max(target, current);
+        if (available <= 0) {
+            available = genericStack.amount();
+        }
+        if (available > 0) {
+            target = Math.min(target, available);
         }
 
-        int delta = current - requestedAmount;
-        int normalizedDelta = ((delta + bucket - 1) / bucket) * bucket;
-        int target = current - normalizedDelta;
+        return Math.max(target, 0);
+    }
+
+    @Unique
+    private int fluidcouriers$normalizeScrollAmountStep(BigGenericStack stack, int requestedAmount) {
+        if (!fluidcouriers$shouldUseBucketUnit(stack)) {
+            return requestedAmount;
+        }
+
+        GenericStack genericStack = stack.get();
+        int current = genericStack.amount();
+        int deltaUnits = requestedAmount - current;
+        if (deltaUnits == 0) {
+            return current;
+        }
+
+        final int bucket = 1000;
+        int target = current + Integer.signum(deltaUnits) * Math.abs(deltaUnits) * bucket;
+        int available = fluidcouriers$getAvailableAmount(genericStack.key());
+        if (available <= 0) {
+            available = genericStack.amount();
+        }
+        if (available > 0) {
+            target = Math.min(target, available);
+        }
+
         return Math.max(target, 0);
     }
 
@@ -93,7 +114,12 @@ public abstract class PortableStockTickerScreenAmountStepMixin {
             return false;
         }
 
-        return fluidcouriers$getAvailableAmount(key) >= 1000;
+        int available = fluidcouriers$getAvailableAmount(key);
+        if (available <= 0) {
+            available = genericStack.amount();
+        }
+
+        return available >= 1000;
     }
 
     @Unique
