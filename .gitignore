@@ -1,0 +1,44 @@
+# Gradle / ForgeGradle
+.gradle/
+build/
+out/
+bin/
+
+# Forge run directory
+run/
+runs/
+
+# Logs and runtime artifacts
+logs/
+crash-reports/
+*.log
+
+# Java / JVM artifacts
+*.class
+hs_err_pid*
+replay_pid*
+
+# IDE files (JetBrains)
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/*
+
+# Eclipse / legacy Forge workspace files
+.project
+.classpath
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Keep Gradle wrapper binaries under version control
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+.tmp/
+artwork/

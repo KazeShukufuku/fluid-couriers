@@ -1,0 +1,115 @@
+package dev.fluidcouriers.mixin.client;
+
+import com.kreidev.cmpackagecouriers.stock_ticker.PortableStockTickerScreen;
+import com.yision.fluidlogistics.item.CompressedTankItem;
+import net.minecraft.world.item.ItemStack;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import ru.zznty.create_factory_abstractions.api.generic.key.GenericKey;
+import ru.zznty.create_factory_abstractions.api.generic.stack.GenericStack;
+import ru.zznty.create_factory_abstractions.generic.key.item.ItemKey;
+import ru.zznty.create_factory_abstractions.generic.support.BigGenericStack;
+
+import java.util.List;
+
+@Mixin(value = PortableStockTickerScreen.class, remap = false)
+public abstract class PortableStockTickerScreenAmountStepMixin {
+
+    @Shadow
+    public List<List<BigGenericStack>> displayedItems;
+
+    @Redirect(
+            method = "mouseClicked(DDI)Z",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lru/zznty/create_factory_abstractions/generic/support/BigGenericStack;setAmount(I)V"
+            ),
+            remap = false
+    )
+    private void fluidcouriers$bucketStepOnClick(BigGenericStack stack, int requestedAmount) {
+        stack.setAmount(fluidcouriers$normalizeAmountStep(stack, requestedAmount));
+    }
+
+    @Redirect(
+            method = "mouseScrolled(DDDD)Z",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lru/zznty/create_factory_abstractions/generic/support/BigGenericStack;setAmount(I)V"
+            ),
+            remap = false
+    )
+    private void fluidcouriers$bucketStepOnScroll(BigGenericStack stack, int requestedAmount) {
+        stack.setAmount(fluidcouriers$normalizeAmountStep(stack, requestedAmount));
+    }
+
+    @Unique
+    private int fluidcouriers$normalizeAmountStep(BigGenericStack stack, int requestedAmount) {
+        if (!fluidcouriers$shouldUseBucketUnit(stack)) {
+            return requestedAmount;
+        }
+
+        GenericStack genericStack = stack.get();
+        int current = genericStack.amount();
+        if (requestedAmount == current) {
+            return requestedAmount;
+        }
+
+        final int bucket = 1000;
+        int available = fluidcouriers$getAvailableAmount(genericStack.key());
+
+        if (requestedAmount > current) {
+            int delta = requestedAmount - current;
+            int normalizedDelta = ((delta + bucket - 1) / bucket) * bucket;
+            int target = current + normalizedDelta;
+            if (available > 0) {
+                target = Math.min(target, available);
+            }
+            return Math.max(target, current);
+        }
+
+        int delta = current - requestedAmount;
+        int normalizedDelta = ((delta + bucket - 1) / bucket) * bucket;
+        int target = current - normalizedDelta;
+        return Math.max(target, 0);
+    }
+
+    @Unique
+    private boolean fluidcouriers$shouldUseBucketUnit(BigGenericStack stack) {
+        GenericStack genericStack = stack.get();
+        GenericKey key = genericStack.key();
+        if (!(key instanceof ItemKey itemKey)) {
+            return false;
+        }
+
+        ItemStack itemStack = itemKey.stack();
+        if (!CompressedTankItem.isVirtual(itemStack)) {
+            return false;
+        }
+
+        return fluidcouriers$getAvailableAmount(key) >= 1000;
+    }
+
+    @Unique
+    private int fluidcouriers$getAvailableAmount(GenericKey key) {
+        if (displayedItems == null) {
+            return -1;
+        }
+
+        for (List<BigGenericStack> category : displayedItems) {
+            if (category == null) {
+                continue;
+            }
+            for (BigGenericStack entry : category) {
+                GenericStack genericStack = entry.get();
+                if (genericStack.key().equals(key)) {
+                    return genericStack.amount();
+                }
+            }
+        }
+
+        return -1;
+    }
+}
