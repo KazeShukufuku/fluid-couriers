@@ -1,0 +1,91 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.gradle.userdev' version '7.0.142'
+}
+
+version = project.mod_version
+group = project.mod_group_id
+
+base {
+    archivesName = project.mod_id
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+minecraft {
+    accessTransformers {
+        file('src/main/resources/META-INF/accesstransformer.cfg')
+    }
+}
+
+runs {
+    configureEach {
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
+        modSource project.sourceSets.main
+    }
+    client {
+        workingDirectory project.file('run')
+    }
+    server {
+        workingDirectory project.file('run')
+    }
+}
+
+repositories {
+    maven { url = 'https://neoforged.forgecdn.net/releases' }
+    maven { url = 'https://maven.createmod.net' }
+    maven { url = 'https://mvn.devos.one/snapshots' }
+    maven {
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+    maven { url = 'https://dl.zznty.ru/maven' }
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:${project.neo_version}"
+
+    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-api-${project.flywheel_minecraft_version}:${project.flywheel_version}"
+    implementation "com.tterrag.registrate:Registrate:${project.registrate_version}"
+    implementation "net.createmod.ponder:Ponder-NeoForge-${project.minecraft_version}:${project.ponder_version}"
+    compileOnly("com.simibubi.create:create-${project.minecraft_version}:${project.create_version}") { transitive = false }
+
+    // Create Mobile Packages for NeoForge 1.21.1: project 1232978
+    compileOnly "curse.maven:create-mobile-packages-1232978:7773607"
+
+    // FluidLogistics for NeoForge 1.21.1: project 1475079
+    compileOnly "curse.maven:fluidlogistics-1475079:7750973"
+
+    // Create Factory Abstractions from author's public maven
+    compileOnly "ru.zznty:create_factory_abstractions-${project.minecraft_version}:${project.cfa_version}"
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'     : project.mod_id,
+            'Specification-Vendor'    : 'fluidcouriers',
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.jar.archiveVersion,
+            'Implementation-Vendor'   : 'fluidcouriers',
+            'MixinConfigs'            : "${project.mod_id}.mixins.json"
+        ])
+    }
+}
+

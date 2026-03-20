@@ -1,0 +1,59 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="fluidcouriers"
+version="1.0.0"
+displayName="Fluid Couriers (FluidLogistics x Create Mobile Packages Compat)"
+authors="fluidcouriers"
+description='''
+Compatibility mod between Create Mobile Packages (create_mobile_packages)
+and FluidLogistics.
+
+Fixes the Portable Stock Ticker so it correctly displays fluids from a
+FluidPackager-linked inventory (instead of Compressed Tank items) and
+allows ordering those fluids just like a stationary Stock Ticker does.
+'''
+
+[[dependencies.fluidcouriers]]
+    modId="neoforge"
+    mandatory=true
+    versionRange="[21.1.77,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.21.1,1.22)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="create"
+    mandatory=true
+    versionRange="[6.0.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="create_mobile_packages"
+    mandatory=true
+    versionRange="[0.6.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="create_factory_abstractions"
+    mandatory=true
+    versionRange="[1.4.7,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.fluidcouriers]]
+    modId="fluidlogistics"
+    mandatory=true
+    versionRange="[0.6.0,)"
+    ordering="AFTER"
+    side="BOTH"

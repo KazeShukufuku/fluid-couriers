@@ -1,0 +1,15 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://neoforged.forgecdn.net/releases' }
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == 'net.neoforged.gradle.userdev') {
+                useModule("net.neoforged.gradle:userdev:${requested.version}")
+            }
+        }
+    }
+}
+
+rootProject.name = 'fluid-couriers'
