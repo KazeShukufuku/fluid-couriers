@@ -97,7 +97,7 @@ build/libs/fluidcouriers-<version>.jar
 |------|------|
 | Minecraft | 1.21.1 |
 | NeoForge | 21.1.213 |
-| Create | 6.0.0+ |
+| Create | 6.0.9+ |
 | CM Package Couriers | 2.0.1+ |
 | FluidLogistics | 0.6.0+ |
 
