@@ -1,6 +1,6 @@
 # Fluid Couriers — FluidLogistics × Package Couriers 兼容模组
 
-非常感谢[一只小扳手114](https://center.mcmod.cn/859660/)提供的1.21.1版本[无人机物流](https://www.curseforge.com/minecraft/mc-mods/create-mobile-packages)兼容帮助！
+非常感谢[一只小扳手114](https://modrinth.com/user/ALittleWrench114)提供的1.21.1版本[无人机物流](https://www.curseforge.com/minecraft/mc-mods/create-mobile-packages)兼容帮助！
 
 ## 解决的问题
 
